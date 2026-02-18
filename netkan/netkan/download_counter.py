@@ -307,11 +307,17 @@ class DownloadCounter:
         for ckan in self.ckm_repo.all_latest_modules():  # pylint: disable=too-many-nested-blocks
             if ckan.kind == 'dlc':
                 continue
-            nk = Netkan(self.nk_repo.nk_path(ckan.identifier), game_id=self.game_id)
+            if self.nk_repo.nk_path(ckan.identifier).exists():
+                nk = Netkan(self.nk_repo.nk_path(ckan.identifier), game_id=self.game_id)
+            else:
+                nk = None
             for download in ckan.downloads:
                 try:
                     url_parse = urllib.parse.urlparse(download)
-                    include_parents = nk.check_parent_downloads()
+                    if nk is not None:
+                        include_parents = nk.check_parent_downloads()
+                    else:
+                        include_parents = True
                     if url_parse.netloc == 'github.com':
                         match = GitHubBatchedQuery.PATH_PATTERN.match(url_parse.path)
                         if match:
